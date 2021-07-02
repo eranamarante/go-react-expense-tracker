@@ -3,10 +3,12 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/eranamarante/go-react-expense-tracker/server/database"
+	"github.com/eranamarante/go-react-expense-tracker/server/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -49,4 +51,27 @@ func getAllExpenses() []primitive.M  {
 
 	cur.Close(context.Background())
 	return results
+}
+
+func AddExpense(w http.ResponseWriter, r *http.Request)  {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	
+	var expense models.Expense
+	json.NewDecoder(r.Body).Decode(&expense)
+
+	addExpense(expense)
+	json.NewEncoder(w).Encode(expense)
+}
+
+func addExpense(task models.Expense) {
+	insertResult, err := expensesCollection.InsertOne(context.Background(), task)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("Inserted a Single Record ", insertResult.InsertedID)
 }
