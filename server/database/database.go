@@ -4,46 +4,28 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/eranamarante/go-react-expense-tracker/server/helper"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func ConnectDB() *mongo.Collection {
+	config := helper.GetConfiguration()
 
-func DBInstance() *mongo.Client {
-	err := godotenv.Load(os.ExpandEnv("$GOPATH/src/github.com/eranamarante/go-react-expense-tracker/.env"))
+	// Set client options
+	clientOptions := options.Client().ApplyURI(config.ConnectionString)
 
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), clientOptions)
 
-	MongoDb := os.Getenv("MONGODB_URL")
-
-	client, err := mongo.NewClient(options.Client().ApplyURI(MongoDb))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-			log.Fatal(err)
-	}
 	fmt.Println("Connected to MongoDB!")
 
-	return client
-}
-
-var Client *mongo.Client = DBInstance()
-
-func OpenCollection(client *mongo.Client, collectionName string) *mongo.Collection {
-
-	var collection *mongo.Collection = client.Database("test").Collection(collectionName)
+	collection := client.Database("go-expense-tracker").Collection("expenses")
 
 	return collection
 }
