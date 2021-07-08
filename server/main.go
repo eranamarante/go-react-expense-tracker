@@ -4,21 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/eranamarante/go-react-expense-tracker/server/helper"
 	"github.com/eranamarante/go-react-expense-tracker/server/router"
 )
 
-
 func main() {
-	port := os.Getenv("PORT")
+	port := helper.GetConfiguration().Port
 
-	if port == "" {
-		port = "8080"
-	}
-	
 	r := router.Router()
 
-	fmt.Printf("Starting server on the port %v ...", port)
-	log.Fatal(http.ListenAndServe(":" + port, r))
+	fmt.Printf("Starting server on the port %v ... \n", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
