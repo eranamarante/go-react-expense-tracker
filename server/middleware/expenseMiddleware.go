@@ -134,3 +134,51 @@ func DeleteExpense(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(deleteResult)
 }
+
+func MarkExpenseAsPaid(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+
+	result, err := expensesCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": id},
+		bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "is_paid", Value: true},
+				{Key: "updated_at", Value: time.Now()},
+			}},
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
+	json.NewEncoder(w).Encode(result)
+}
+
+func MarkExpenseAsUnpaid(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+
+	result, err := expensesCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": id},
+		bson.D{
+			{Key: "$set", Value: bson.D{
+				{Key: "is_paid", Value: false},
+				{Key: "updated_at", Value: time.Now()},
+			}},
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Updated %v Documents!\n", result.ModifiedCount)
+	json.NewEncoder(w).Encode(result)
+}
