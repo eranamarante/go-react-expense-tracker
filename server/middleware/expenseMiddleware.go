@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/eranamarante/go-react-expense-tracker/server/database"
 	"github.com/eranamarante/go-react-expense-tracker/server/helper"
@@ -79,6 +80,40 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Inserted a Single Record ", insertResult.InsertedID)
+	json.NewEncoder(w).Encode(expense)
+}
+
+func UpdateExpense(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	params := mux.Vars(r)
+	id, _ := primitive.ObjectIDFromHex(params["id"])
+
+	var expense models.Expense
+
+	filter := bson.M{"_id": id}
+
+	_ = json.NewDecoder(r.Body).Decode(&expense)
+
+	update := bson.D{
+		{Key: "$set", Value: bson.D{
+			{Key: "title", Value: expense.Title},
+			{Key: "amount", Value: expense.Amount},
+			{Key: "due_date", Value: expense.DueDate},
+			{Key: "is_paid", Value: expense.IsPaid},
+			{Key: "updated_at", Value: time.Now()},
+		}},
+	}
+
+	err := expensesCollection.FindOneAndUpdate(context.Background(), filter, update).Decode(&expense)
+
+	if err != nil {
+		helper.GetError(err, w)
+		return
+	}
+
+	expense.Id = id
+
 	json.NewEncoder(w).Encode(expense)
 }
 
