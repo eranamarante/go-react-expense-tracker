@@ -35,11 +35,12 @@ func GetError(err error, w http.ResponseWriter) {
 type Configuration struct {
 	Port             string
 	ConnectionString string
+	DatabaseName     string
 }
 
 // GetConfiguration method basically populate configuration information from .env and return Configuration model
 func GetConfiguration() Configuration {
-	err := godotenv.Load("./.env")
+	err := godotenv.Load(os.ExpandEnv("$GOPATH/src/github.com/eranamarante/go-react-expense-tracker/.env"))
 
 	if err != nil {
 		log.Fatalf("Error loading .env file")
@@ -47,7 +48,8 @@ func GetConfiguration() Configuration {
 
 	configuration := Configuration{
 		os.Getenv("PORT"),
-		os.Getenv("CONNECTION_STRING"),
+		os.Getenv("MONGODB_URL"),
+		os.Getenv("MONGODB_DATABASE"),
 	}
 
 	return configuration
