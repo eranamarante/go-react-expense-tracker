@@ -9,4 +9,5 @@ func ExpenseRoutes(route *gin.Engine) {
 	route.GET("/expenses", controllers.GetAllExpenses())
 	route.POST("/expenses/new", controllers.AddExpense())
 	route.GET("/expenses/:id/", controllers.GetExpense())
+	route.PUT("/expenses/:id/edit", controllers.UpdateExpense())
 }

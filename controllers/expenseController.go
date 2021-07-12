@@ -103,3 +103,39 @@ func GetExpense() gin.HandlerFunc {
 		c.JSON(http.StatusOK, expense)
 	}
 }
+
+func UpdateExpense() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		var expense models.Expense
+
+		id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+		if err := c.BindJSON(&expense); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		expense.UpdatedAt, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+
+		result, err := expenseCollection.UpdateOne(
+			ctx,
+			bson.M{"_id": id},
+			bson.D{
+				{Key: "$set", Value: bson.D{
+					{Key: "description", Value: expense.Description},
+					{Key: "amount", Value: expense.Amount},
+					{Key: "due_date", Value: expense.DueDate},
+					{Key: "is_paid", Value: expense.IsPaid},
+					{Key: "updated_at", Value: expense.UpdatedAt},
+				}},
+			},
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		c.JSON(http.StatusOK, result)
+	}
+}
