@@ -4,37 +4,34 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/eranamarante/go-expense-tracker-api/database"
+	"github.com/dgrijalva/jwt-go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// SignedDetails
 type SignedDetails struct {
-	Email      string
-	First_name string
-	Last_name  string
-	Uid        string
+	Email     string
+	FirstName string
+	LastName  string
+	Uid       string
 	jwt.StandardClaims
 }
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "user")
+var userCollection *mongo.Collection = OpenCollection(Client, "users")
 
-var SECRET_KEY string = os.Getenv("SECRET_KEY")
+var SECRET_KEY string = GetConfiguration().SecretKey
 
 // GenerateAllTokens generates both teh detailed token and refresh token
 func GenerateAllTokens(email string, firstName string, lastName string, uid string) (signedToken string, signedRefreshToken string, err error) {
 	claims := &SignedDetails{
-		Email:      email,
-		First_name: firstName,
-		Last_name:  lastName,
-		Uid:        uid,
+		Email:     email,
+		FirstName: firstName,
+		LastName:  lastName,
+		Uid:       uid,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Local().Add(time.Hour * time.Duration(24)).Unix(),
 		},
@@ -94,11 +91,11 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userId strin
 
 	var updateObj primitive.D
 
-	updateObj = append(updateObj, bson.E{"token", signedToken})
-	updateObj = append(updateObj, bson.E{"refresh_token", signedRefreshToken})
+	updateObj = append(updateObj, bson.E{Key: "token", Value: signedToken})
+	updateObj = append(updateObj, bson.E{Key: "refresh_token", Value: signedRefreshToken})
 
 	Updated_at, _ := time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-	updateObj = append(updateObj, bson.E{"updated_at", Updated_at})
+	updateObj = append(updateObj, bson.E{Key: "updated_at", Value: Updated_at})
 
 	upsert := true
 	filter := bson.M{"user_id": userId}
@@ -110,7 +107,7 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userId strin
 		ctx,
 		filter,
 		bson.D{
-			{"$set", updateObj},
+			{Key: "$set", Value: updateObj},
 		},
 		&opt,
 	)
