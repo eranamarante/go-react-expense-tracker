@@ -139,3 +139,21 @@ func UpdateExpense() gin.HandlerFunc {
 		c.JSON(http.StatusOK, result)
 	}
 }
+
+func DeleteExpense() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+		filter := bson.M{"_id": id}
+
+		d, err := expenseCollection.DeleteOne(ctx, filter)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		c.JSON(http.StatusOK, d)
+	}
+}

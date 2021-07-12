@@ -10,4 +10,5 @@ func ExpenseRoutes(route *gin.Engine) {
 	route.POST("/expenses/new", controllers.AddExpense())
 	route.GET("/expenses/:id/", controllers.GetExpense())
 	route.PUT("/expenses/:id/edit", controllers.UpdateExpense())
+	route.DELETE("/expenses/:id/delete", controllers.DeleteExpense())
 }
