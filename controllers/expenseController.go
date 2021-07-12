@@ -84,3 +84,22 @@ func GetAllExpenses() gin.HandlerFunc {
 		c.JSON(http.StatusOK, expenses)
 	}
 }
+
+func GetExpense() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
+		id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+		filter := bson.M{"_id": id}
+
+		var expense primitive.M
+		err := expenseCollection.FindOne(ctx, filter).Decode(&expense)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		c.JSON(http.StatusOK, expense)
+	}
+}
