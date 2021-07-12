@@ -4,28 +4,22 @@ import (
 	"context"
 	"fmt"
 	"log"
-
 	"net/http"
 	"time"
 
+	"github.com/eranamarante/go-expense-tracker-api/helper"
+	"github.com/eranamarante/go-expense-tracker-api/models"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-
-	"github.com/eranamarante/go-expense-tracker-api/database"
-
-	helper "github.com/eranamarante/go-expense-tracker-api/helpers"
-	"github.com/eranamarante/go-jwt-auth-api/models"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var userCollection *mongo.Collection = database.OpenCollection(database.Client, "users")
+var userCollection *mongo.Collection = helper.OpenCollection(helper.Client, "users")
 var validate = validator.New()
 
-//HashPassword is used to encrypt the password before it is stored in the DB
 func HashPassword(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil {
@@ -35,7 +29,6 @@ func HashPassword(password string) string {
 	return string(bytes)
 }
 
-//VerifyPassword checks the input password while verifying it with the passward in the DB.
 func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
 	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
 	check := true
@@ -49,10 +42,11 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 	return check, msg
 }
 
-//CreateUser is the api used to tget a single user
 func SignUp() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
 		var user models.User
 
 		if err := c.BindJSON(&user); err != nil {
@@ -67,7 +61,6 @@ func SignUp() gin.HandlerFunc {
 		}
 
 		count, err := userCollection.CountDocuments(ctx, bson.M{"email": user.Email})
-		defer cancel()
 		if err != nil {
 			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while checking for the email"})
@@ -115,6 +108,8 @@ func SignUp() gin.HandlerFunc {
 func Login() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		defer cancel()
+
 		var user models.User
 		var foundUser models.User
 
@@ -124,7 +119,6 @@ func Login() gin.HandlerFunc {
 		}
 
 		err := userCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&foundUser)
-		defer cancel()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "login or passowrd is incorrect"})
 			return
